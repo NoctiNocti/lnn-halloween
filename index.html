@@ -83,8 +83,12 @@ h1 {
   font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line);
   border-radius: 999px; padding: 7px 14px; cursor: pointer;
 }
-.groups button { font-weight: 600; }
-.groups button.on { background: var(--orange); border-color: var(--orange); color: #1a0d00; }
+.groups button {
+  font-weight: 700; font-size: 15px; padding: 8px 16px;
+  background: rgba(255,138,31,.14); border: 1.5px solid rgba(255,138,31,.55); color: var(--orange2);
+}
+.groups button:hover { background: rgba(255,138,31,.26); border-color: var(--orange); }
+.groups button.on { background: var(--orange); border-color: var(--orange); color: #1a0d00; box-shadow: 0 0 14px rgba(255,138,31,.45); }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 .chips button { font-size: 14px; padding: 6px 12px; background: var(--bg2); }
 .chips button.on { border-color: var(--orange2); color: var(--orange2); }
@@ -140,6 +144,12 @@ const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const fmt = (v) => Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
+// ties (as displayed) share a place: 1, 1, 1, 4…
+for (const b of DATA.boards) {
+  let place = 0, prev = null;
+  b.places = b.rows.map(([, v], i) => { if (fmt(v) !== prev) { place = i + 1; prev = fmt(v); } return place; });
+}
+
 $("window").textContent = "📅 " + DATA.totals.window;
 for (const [icon, big, lbl] of DATA.totals.cards) {
   const c = el("div", "card");
@@ -171,8 +181,9 @@ function drawBoard(scroll) {
   head.append(el("h2", "", b.title));
   if (b.sub) head.append(el("p", "", b.sub));
   const rows = b.rows.map(([name, v, note], i) => {
-    const r = el("div", "row" + (i < 3 ? " top" + (i + 1) : "") + (q.length >= 2 && name.toLowerCase().includes(q) ? " hit" : ""));
-    r.append(el("div", "rank" + (MEDAL[i + 1] ? " m" : ""), MEDAL[i + 1] || i + 1));
+    const p = b.places[i];
+    const r = el("div", "row" + (p <= 3 ? " top" + p : "") + (q.length >= 2 && name.toLowerCase().includes(q) ? " hit" : ""));
+    r.append(el("div", "rank" + (MEDAL[p] ? " m" : ""), MEDAL[p] || p));
     const n = el("div", "name", name);
     if (note) n.append(el("span", "note", note));
     r.append(n, el("div", "val", fmt(v)));
@@ -192,7 +203,7 @@ function drawMe() {
   for (const b of DATA.boards) {
     const found = [];
     b.rows.forEach(([name, v], i) => {
-      if (name.toLowerCase().includes(q)) found.push({ b, name, v, rank: i + 1 });
+      if (name.toLowerCase().includes(q)) found.push({ b, name, v, rank: b.places[i] });
     });
     // rivalry boards have one row per pair, so show only the best pair and count the rest
     if (b.group === "Rivalries" && found.length > 1) found.splice(1, found.length, { ...found[0], more: found.length - 1 });
