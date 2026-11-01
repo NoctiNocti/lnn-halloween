@@ -144,10 +144,10 @@ const MEDAL = { 1: "🥇", 2: "🥈", 3: "🥉" };
 const fmt = (v) => Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
-// ties (as displayed) share a place: 1, 1, 1, 4…
+// ties (as displayed) share a place, next value is the next place: 1, 1, 2, 3, 3…
 for (const b of DATA.boards) {
   let place = 0, prev = null;
-  b.places = b.rows.map(([, v], i) => { if (fmt(v) !== prev) { place = i + 1; prev = fmt(v); } return place; });
+  b.places = b.rows.map(([, v]) => { if (fmt(v) !== prev) { place += 1; prev = fmt(v); } return place; });
 }
 
 $("window").textContent = "📅 " + DATA.totals.window;
